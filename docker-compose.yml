@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bulk-certificate-generator-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Bulk Certificate Generator API
+      - APP_ENV=production
+      - DEBUG=false
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/certificates_db
+      - GENERATED_CERTIFICATES_DIR=generated_certificates
+      - MAX_BULK_LIMIT=1000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./generated_certificates:/app/generated_certificates
+    networks:
+      - cert-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: bulk-certificate-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=certificates_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d certificates_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cert-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  cert-network:
+    driver: bridge
