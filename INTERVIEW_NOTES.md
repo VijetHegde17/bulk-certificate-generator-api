@@ -95,7 +95,7 @@ Because the background processor commits status updates after each certificate, 
 ### 12. How is path traversal prevented?
 During file retrieval (`GET /certificates/{id}`):
 1. The stored `file_path` is resolved to an absolute path.
-2. The [validate_safe_path](file:///c:/Users/vijet/OneDrive/DSATM/oops/DL/CNS/Bulk%20Certificate%20Generator/app/utils/file_utils.py#L40) utility asserts that the resolved path is strictly located within `settings.certificates_dir_path` using Python's `Path.relative_to()`.
+2. The `validate_safe_path` utility (`app/utils/file_utils.py`) asserts that the resolved path is strictly located within `settings.certificates_dir_path` using Python's `Path.relative_to()`.
 3. If an attacker tampers with a path (e.g., `../../etc/passwd` or `/etc/passwd`), `validate_safe_path` catches the escape and returns `HTTP 400 Bad Request`.
 4. No raw filesystem paths are ever returned in API response bodies.
 
