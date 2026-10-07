@@ -170,6 +170,38 @@ def test_retrieve_path_traversal_attempt_returns_400(client: TestClient, db_sess
     assert "location" in response.json()["detail"].lower()
 
 
+def test_retrieve_relative_path_traversal_returns_400(client: TestClient, db_session: Session):
+    """Test that a relative traversal sequence (../../etc/passwd) is safely rejected with 400."""
+    job = GenerationJob(
+        title="Job",
+        course="Course",
+        organization="Org",
+        event_date="2026-10-07",
+        status=JobStatus.COMPLETED,
+        total_count=1,
+    )
+    db_session.add(job)
+    db_session.flush()
+
+    cert = Certificate(
+        job_id=job.id,
+        recipient_name="Traversal User",
+        recipient_email="traversal@example.com",
+        certificate_title="Job",
+        course="Course",
+        organization="Org",
+        event_date="2026-10-07",
+        status=CertificateStatus.GENERATED,
+        file_path="../../etc/passwd",
+    )
+    db_session.add(cert)
+    db_session.commit()
+
+    response = client.get(f"/api/v1/certificates/{cert.id}")
+    assert response.status_code == 400
+    assert "location" in response.json()["detail"].lower()
+
+
 def test_download_job_certificates_zip_archive(client: TestClient):
     """Test downloading the batch ZIP archive of all generated certificates for a job."""
     payload = {
